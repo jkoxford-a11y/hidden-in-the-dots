@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hidden in the Dots</title>
-<meta name="description" content="Press and hold: random dots become a dog. A demo of the Gestalt principle of common fate.">
+<meta name="description" content="Four hands-on Gestalt demos for your phone: common fate, closure, proximity and similarity, figure-ground.">
 <style>
-  :root { --bg: #1d1f24; --ink: #fafaf7; --soft: #c8ccd2; --accent: #e8590c; }
+  :root { --bg: #1d1f24; --ink: #fafaf7; --soft: #c8ccd2; --accent: #e8590c; --line: #3a3f47; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; }
   body {
@@ -15,38 +15,95 @@
     -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
   }
   canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-  .msg {
-    position: fixed; left: 0; right: 0; bottom: max(28px, env(safe-area-inset-bottom));
-    padding: 0 24px; text-align: center; pointer-events: none;
+  .top {
+    position: fixed; left: 0; right: 0; top: max(18px, env(safe-area-inset-top));
+    text-align: center; pointer-events: none; padding: 0 16px;
   }
-  .msg p { font-size: clamp(20px, 5.4vw, 30px); font-weight: 700; line-height: 1.3; }
-  .msg small { display: block; margin-top: 8px; font-size: clamp(15px, 3.8vw, 19px); color: var(--soft); line-height: 1.4; }
-  .msg b { color: var(--accent); }
   .pill {
-    display: inline-block; padding: 12px 22px; border-radius: 999px;
-    background: rgba(29, 31, 36, 0.85); border: 2px solid var(--accent);
+    display: inline-block; padding: 10px 20px; border-radius: 999px;
+    background: rgba(29, 31, 36, 0.88); border: 2px solid var(--accent);
+    font-size: clamp(18px, 4.8vw, 26px); font-weight: 700;
   }
-  .hidden { opacity: 0; transition: opacity 0.25s; }
-  .shown { opacity: 1; transition: opacity 0.4s; }
+  .bottom {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 14px 20px max(16px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(29,31,36,0.97) 75%, rgba(29,31,36,0));
+  }
+  .caption { min-height: 118px; text-align: center; transition: opacity 0.4s; }
+  .caption p { font-size: clamp(19px, 5vw, 28px); font-weight: 700; line-height: 1.3; }
+  .caption small { display: block; margin-top: 8px; font-size: clamp(15px, 3.8vw, 19px); color: var(--soft); line-height: 1.4; }
+  .caption b { color: var(--accent); }
+  .nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+  .nav button {
+    font: inherit; font-size: 18px; font-weight: 700; color: var(--ink); background: transparent;
+    border: 2px solid var(--line); border-radius: 999px; padding: 10px 20px; min-width: 96px; cursor: pointer;
+  }
+  .nav button.go { background: var(--accent); border-color: var(--accent); color: #1d1f24; }
+  .nav button[disabled] { visibility: hidden; }
+  .steps { display: flex; gap: 8px; }
+  .steps i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+  .steps i.on { background: var(--accent); }
+  .slider {
+    position: fixed; left: 50%; transform: translateX(-50%); width: min(80vw, 460px);
+    -webkit-appearance: none; appearance: none; height: 44px; background: transparent; touch-action: auto;
+  }
+  .slider::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: var(--line); }
+  .slider::-moz-range-track { height: 8px; border-radius: 4px; background: var(--line); }
+  .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 40px; height: 40px; margin-top: -16px; border-radius: 50%; background: var(--accent); border: 3px solid var(--ink); }
+  .slider::-moz-range-thumb { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); border: 3px solid var(--ink); }
+  .end {
+    position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center;
+    padding: 24px 28px 150px; max-width: 640px; margin: 0 auto; pointer-events: none;
+  }
+  .end .kicker { font-size: 16px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); }
+  .end h1 { font-family: Georgia, serif; font-size: clamp(44px, 13vw, 72px); line-height: 1.05; margin: 10px 0 12px; }
+  .end h2 { font-size: clamp(22px, 6vw, 32px); line-height: 1.25; margin-bottom: 22px; }
+  .end ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .end li { font-size: clamp(16px, 4.2vw, 20px); color: var(--soft); line-height: 1.35; }
+  .end li b { color: var(--ink); }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-<canvas id="c" aria-label="A field of moving dots. Press and hold to make some of them move together."></canvas>
-<div class="msg">
-  <div id="prompt" class="shown"><p class="pill">Press and hold anywhere</p></div>
-  <div id="after" class="hidden" hidden>
-    <p>Every dot is just a dot.<br>Moving together, they're a <b>dog</b>.</p>
-    <small>Common fate: things that move together are seen as one thing.<br>The whole is different from the sum of its parts.</small>
+<canvas id="c" aria-label="Interactive Gestalt demo"></canvas>
+<div class="top"><span class="pill" id="instr">Press and hold anywhere</span></div>
+<input class="slider" id="slider" type="range" min="0" max="1000" value="0" aria-label="Spacing" hidden>
+<div class="end" id="end" hidden>
+  <p class="kicker">What you just saw</p>
+  <h1>Gestalt</h1>
+  <h2>The whole is greater than the sum of the parts.</h2>
+  <ul>
+    <li><b>A dog</b> that no single dot contains</li>
+    <li><b>A triangle</b> that nobody drew</li>
+    <li><b>Rows or columns</b> from spacing alone</li>
+    <li><b>A vase or two faces</b> from one outline</li>
+  </ul>
+</div>
+<div class="bottom">
+  <div class="caption" id="caption" style="opacity:0"><p id="capMain"></p><small id="capSub"></small></div>
+  <div class="nav">
+    <button id="back" type="button">Back</button>
+    <div class="steps" id="steps"></div>
+    <button id="next" type="button" class="go">Next</button>
   </div>
 </div>
 <script>
 (() => {
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
-  const promptEl = document.getElementById('prompt');
-  const afterEl = document.getElementById('after');
+  const $ = id => document.getElementById(id);
+  const instr = $('instr'), caption = $('caption'), slider = $('slider'), endEl = $('end');
   const debug = new URLSearchParams(location.search).has('debug');
+  const INK = '#fafaf7', BG = '#1d1f24', ACC = '#e8590c', SOFT = '#c8ccd2';
+  let W, H, dpr;
 
+  // The area between the instruction pill and the caption panel.
+  function stage() {
+    const top = 80, bottom = H - 210;
+    return { x: 0, y: top, w: W, h: Math.max(160, bottom - top), cx: W / 2, cy: top + Math.max(160, bottom - top) / 2 };
+  }
+
+  // ---------- 1. Common fate: the dog in the dots ----------
   // Dog silhouette, side view facing right, in a 1 x 0.75 box.
   function dogPath(c) {
     c.beginPath();
@@ -63,91 +120,255 @@
     c.lineTo(0.07, 0.14); c.lineTo(0.25, 0.29); c.closePath();
     c.fill('nonzero');
   }
+  const fate = {
+    instr: 'Press and hold anywhere',
+    cap: ["Every dot is just a dot. Moving together, they're a <b>dog</b>.",
+          'Common fate: things that move together are seen as one thing.'],
+    holding: false, dots: [], mask: null, mw: 0,
+    layout() {
+      const s = stage();
+      const scale = Math.min(s.w * 0.92, s.h / 0.75);
+      const ox = (W - scale) / 2, oy = s.cy - scale * 0.375;
+      const m = document.createElement('canvas');
+      m.width = this.mw = Math.ceil(W); m.height = Math.ceil(H);
+      const mc = m.getContext('2d');
+      mc.setTransform(scale, 0, 0, scale, ox, oy);
+      mc.fillStyle = '#fff';
+      dogPath(mc);
+      const px = mc.getImageData(0, 0, m.width, m.height).data;
+      this.mask = new Uint8Array(m.width * m.height);
+      for (let i = 0; i < this.mask.length; i++) this.mask[i] = px[i * 4 + 3] > 127 ? 1 : 0;
+      const n = Math.round(Math.min(7000, (W * H) / 42));
+      this.dots = Array.from({ length: n }, () => this.spawn({}, Math.random() * 0.45));
+    },
+    spawn(d, age = 0) {
+      d.x = Math.random() * W; d.y = Math.random() * H;
+      const a = Math.random() * Math.PI * 2;
+      d.vx = Math.cos(a); d.vy = Math.sin(a); d.age = age;
+      return d;
+    },
+    inDog(x, y) {
+      const xi = x | 0, yi = y | 0;
+      return xi >= 0 && yi >= 0 && xi < this.mw && yi < H && this.mask[yi * this.mw + xi] === 1;
+    },
+    down() { this.holding = true; hideCaption(); },
+    up() { if (this.holding) { this.holding = false; done(); } },
+    leave() { this.holding = false; },
+    draw(dt) {
+      const step = 70 * dt;   // same speed for every dot; only the direction differs
+      ctx.fillStyle = INK;
+      for (const d of this.dots) {
+        d.age += dt;
+        if (d.age > 0.45) this.spawn(d);   // short lives keep density uniform
+        const fig = this.inDog(d.x, d.y);
+        if (this.holding && fig) d.x += step;
+        else { d.x += d.vx * step; d.y += d.vy * step; }
+        if (debug && fig) ctx.fillStyle = ACC;
+        ctx.fillRect(d.x - 1.3, d.y - 1.3, 2.6, 2.6);
+        if (debug && fig) ctx.fillStyle = INK;
+      }
+    }
+  };
 
-  let W, H, dpr, mask, maskW, dots = [];
-  const SPEED = 70;          // px per second, same for every dot
-  const LIFE = 0.45;         // seconds; short lives keep density uniform
+  // ---------- 2. Closure: the triangle nobody drew ----------
+  const closure = {
+    instr: 'Tap the picture',
+    cap: ['Nothing new was drawn. Your brain filled in the <b>triangle</b>.',
+          'Closure: we see complete shapes, even when parts are missing.'],
+    t: 0, target: 0,
+    tap() { this.target = this.target ? 0 : 1; if (this.target) setTimeout(done, 700); },
+    draw(dt) {
+      const k = Math.min(1, dt * 3);
+      this.t += (this.target - this.t) * k;
+      const s = stage();
+      const card = Math.min(s.w - 32, s.h - 8);
+      const cx = s.cx, cy = s.cy;
+      ctx.fillStyle = INK;
+      roundRect(cx - card / 2, cy - card / 2, card, card, 20);
+      ctx.fill();
+      const side = card * 0.62, r = side * 0.2;
+      const R = side / Math.sqrt(3);                   // center to vertex
+      const tcy = cy + R * 0.12;
+      ctx.fillStyle = BG;
+      for (let i = 0; i < 3; i++) {
+        const a = -Math.PI / 2 + i * 2 * Math.PI / 3;
+        const vx = cx + R * Math.cos(a), vy = tcy + R * Math.sin(a);
+        const toCenter = a + Math.PI;
+        const mouth = toCenter + (1 - this.t) * Math.PI;   // outward when t = 0
+        ctx.beginPath();
+        ctx.moveTo(vx, vy);
+        ctx.arc(vx, vy, r, mouth + Math.PI / 6, mouth - Math.PI / 6 + Math.PI * 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  };
+
+  // ---------- 3. Proximity vs. similarity ----------
+  const grouping = {
+    instr: 'Drag the slider',
+    cap: ['Same shapes, new spacing, new <b>groups</b>.',
+          'Similarity groups alike things into columns. Proximity groups near things into rows.'],
+    v: 0, fired: false,
+    enter() { slider.hidden = false; slider.value = 0; this.v = 0; this.fired = false; this.place(); },
+    exit() { slider.hidden = true; },
+    place() { const s = stage(); slider.style.top = (s.y + s.h - 50) + 'px'; },
+    input(val) {
+      this.v = val;
+      if (val > 0.85 && !this.fired) { this.fired = true; done(); }
+    },
+    draw() {
+      const s = stage();
+      const area = Math.min(s.w - 40, s.h - 90);
+      const cols = 6, rows = 6;
+      const g = area / cols;                         // equal spacing at v = 0
+      const gx = g * (1 - 0.48 * this.v);             // columns squeeze together
+      const gy = g * (1 + 0.55 * this.v);             // rows spread apart
+      const size = g * 0.36;
+      const cy = s.y + (s.h - 70) / 2;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x = s.cx + (c - (cols - 1) / 2) * gx;
+          const y = cy + (r - (rows - 1) / 2) * Math.min(gy, (s.h - 90) / rows);
+          if (c % 2 === 0) {
+            ctx.fillStyle = INK;
+            ctx.beginPath(); ctx.arc(x, y, size * 0.55, 0, Math.PI * 2); ctx.fill();
+          } else {
+            ctx.fillStyle = ACC;
+            ctx.fillRect(x - size * 0.5, y - size * 0.5, size, size);
+          }
+        }
+      }
+    }
+  };
+
+  // ---------- 4. Figure-ground: vase or faces ----------
+  // Half-width of the vase at each height; the faces' profiles are its edges.
+  const VASE = [[0, .34], [.10, .30], [.22, .25], [.30, .28], [.37, .19], [.42, .11], [.47, .19],
+                [.53, .14], [.57, .18], [.61, .14], [.67, .20], [.75, .12], [.84, .22], [1, .34]];
+  function vaseW(y) {
+    let i = 0;
+    while (i < VASE.length - 2 && VASE[i + 1][0] < y) i++;
+    const p0 = VASE[Math.max(0, i - 1)], p1 = VASE[i], p2 = VASE[i + 1], p3 = VASE[Math.min(VASE.length - 1, i + 2)];
+    const t = (y - p1[0]) / (p2[0] - p1[0] || 1);
+    const t2 = t * t, t3 = t2 * t;   // Catmull-Rom through the table
+    return 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+                  (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
+  }
+  const figure = {
+    instr: 'Tap the picture',
+    cap: ['One outline, two pictures: a <b>vase</b>, or two <b>faces</b>.',
+          'Figure-ground: we split every scene into an object and its background.'],
+    flipped: false, t: 0, taps: 0,
+    tap() { this.flipped = !this.flipped; if (++this.taps === 1) setTimeout(done, 700); },
+    draw(dt) {
+      this.t += ((this.flipped ? 1 : 0) - this.t) * Math.min(1, dt * 4);
+      const s = stage();
+      const side = Math.min(s.w - 40, s.h - 8);
+      const x0 = s.cx - side / 2, y0 = s.cy - side / 2;
+      const mix = (a, b, t) => {
+        const pa = [1, 3, 5].map(i => parseInt(a.substr(i, 2), 16));
+        const pb = [1, 3, 5].map(i => parseInt(b.substr(i, 2), 16));
+        return 'rgb(' + pa.map((v, i) => Math.round(v + (pb[i] - v) * t)).join(',') + ')';
+      };
+      ctx.fillStyle = mix(BG, INK, this.t);          // the faces' region
+      roundRect(x0, y0, side, side, 12); ctx.fill();
+      ctx.fillStyle = mix(INK, BG, this.t);          // the vase
+      ctx.beginPath();
+      const N = 120;
+      for (let i = 0; i <= N; i++) { const y = i / N; ctx.lineTo(s.cx + vaseW(y) * side, y0 + y * side); }
+      for (let i = N; i >= 0; i--) { const y = i / N; ctx.lineTo(s.cx - vaseW(y) * side, y0 + y * side); }
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = SOFT; ctx.lineWidth = 2;
+      roundRect(x0, y0, side, side, 12); ctx.stroke();
+    }
+  };
+
+  // ---------- 5. The whole ----------
+  const ending = {
+    instr: '',
+    enter() { endEl.hidden = false; $('next').textContent = 'Start over'; },
+    exit() { endEl.hidden = true; $('next').textContent = 'Next'; },
+    draw() {}
+  };
+
+  const screens = [fate, closure, grouping, figure, ending];
+  let cur = 0;
+  const steps = $('steps');
+  screens.forEach(() => steps.appendChild(document.createElement('i')));
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function hideCaption() { caption.style.opacity = 0; }
+  function done() {
+    const s = screens[cur];
+    if (!s.cap) return;
+    $('capMain').innerHTML = s.cap[0]; $('capSub').textContent = s.cap[1];
+    caption.style.opacity = 1;
+  }
+  function go(i) {
+    screens[cur].exit && screens[cur].exit();
+    if (screens[cur].leave) screens[cur].leave();
+    cur = (i + screens.length) % screens.length;
+    const s = screens[cur];
+    hideCaption();
+    instr.parentElement.hidden = !s.instr;
+    instr.textContent = s.instr;
+    if (s === closure) { s.t = s.target = 0; }
+    if (s === figure) { s.flipped = false; s.t = 0; s.taps = 0; }
+    s.enter && s.enter();
+    $('back').disabled = cur === 0;
+    [...steps.children].forEach((el, k) => el.className = k === cur ? 'on' : '');
+  }
+  $('next').addEventListener('click', () => go(cur + 1));
+  $('back').addEventListener('click', () => go(cur - 1));
+  slider.addEventListener('input', () => grouping.input(slider.value / 1000));
+
+  // Presses on the canvas drive the current screen; buttons and the slider sit above it.
+  let downAt = 0;
+  canvas.addEventListener('pointerdown', e => {
+    e.preventDefault(); downAt = performance.now();
+    screens[cur].down && screens[cur].down();
+  });
+  const release = () => {
+    const s = screens[cur];
+    if (s.up) s.up();
+    if (s.tap && performance.now() - downAt < 600) s.tap();
+  };
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', () => screens[cur].leave && screens[cur].leave());
+  window.addEventListener('blur', () => screens[cur].leave && screens[cur].leave());
+  window.addEventListener('contextmenu', e => e.preventDefault());
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space' && !e.repeat) { e.preventDefault(); downAt = performance.now(); screens[cur].down && screens[cur].down(); }
+    if (e.code === 'ArrowRight') go(cur + 1);
+    if (e.code === 'ArrowLeft') go(cur - 1);
+  });
+  window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth; H = window.innerHeight;
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    // Fit the dog in the upper part of the screen, above the message.
-    const usableH = H * 0.72;
-    const scale = Math.min(W * 0.92, usableH / 0.75);
-    const ox = (W - scale) / 2, oy = (usableH - scale * 0.75) / 2 + H * 0.02;
-    const m = document.createElement('canvas');
-    m.width = maskW = Math.ceil(W); m.height = Math.ceil(H);
-    const mc = m.getContext('2d');
-    mc.setTransform(scale, 0, 0, scale, ox, oy);
-    mc.fillStyle = '#fff';
-    dogPath(mc);
-    const px = mc.getImageData(0, 0, m.width, m.height).data;
-    mask = new Uint8Array(m.width * m.height);
-    for (let i = 0; i < mask.length; i++) mask[i] = px[i * 4 + 3] > 127 ? 1 : 0;
-
-    const n = Math.round(Math.min(7000, (W * H) / 42));
-    dots = Array.from({ length: n }, () => spawn({}, Math.random() * LIFE));
+    fate.layout();
+    grouping.place();
   }
-
-  function inDog(x, y) {
-    const xi = x | 0, yi = y | 0;
-    if (xi < 0 || yi < 0 || xi >= maskW || yi >= H) return false;
-    return mask[yi * maskW + xi] === 1;
-  }
-
-  function spawn(d, age = 0) {
-    d.x = Math.random() * W; d.y = Math.random() * H;
-    const a = Math.random() * Math.PI * 2;
-    d.vx = Math.cos(a); d.vy = Math.sin(a);
-    d.age = age;
-    return d;
-  }
-
-  let holding = false, revealedOnce = false;
-  function setHold(on) {
-    if (on === holding) return;
-    holding = on;
-    if (on) {
-      promptEl.className = 'hidden';
-      afterEl.className = 'hidden';
-    } else {
-      revealedOnce = true;
-      afterEl.hidden = false;
-      requestAnimationFrame(() => { afterEl.className = 'shown'; });
-    }
-  }
-  window.addEventListener('pointerdown', e => { e.preventDefault(); setHold(true); });
-  window.addEventListener('pointerup', () => setHold(false));
-  window.addEventListener('pointercancel', () => setHold(false));
-  window.addEventListener('blur', () => setHold(false));
-  window.addEventListener('contextmenu', e => e.preventDefault());
-  window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); setHold(true); } });
-  window.addEventListener('keyup', e => { if (e.code === 'Space') setHold(false); });
   window.addEventListener('resize', resize);
 
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    ctx.fillStyle = '#1d1f24';
-    ctx.fillRect(0, 0, W, H);
-    const step = SPEED * dt;
-    ctx.fillStyle = '#fafaf7';
-    for (const d of dots) {
-      d.age += dt;
-      if (d.age > LIFE) spawn(d);
-      const fig = inDog(d.x, d.y);
-      if (holding && fig) { d.x += step; }          // the dog's dots share one motion
-      else { d.x += d.vx * step; d.y += d.vy * step; } // everything else wanders
-      if (debug && fig) ctx.fillStyle = '#e8590c';
-      ctx.fillRect(d.x - 1.3, d.y - 1.3, 2.6, 2.6);
-      if (debug && fig) ctx.fillStyle = '#fafaf7';
-    }
+    ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+    screens[cur].draw(dt);
     requestAnimationFrame(frame);
   }
   resize();
+  const start = parseInt(new URLSearchParams(location.search).get('s') || '0', 10);
+  go(isNaN(start) ? 0 : start);
   requestAnimationFrame(frame);
 })();
 </script>
