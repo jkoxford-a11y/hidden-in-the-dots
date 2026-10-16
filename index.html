@@ -61,6 +61,16 @@
   .end ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
   .end li { font-size: clamp(16px, 4.2vw, 20px); color: var(--soft); line-height: 1.35; }
   .end li b { color: var(--ink); }
+  .rule {
+    margin-top: 26px; font-family: Georgia, serif; font-weight: 900; text-transform: uppercase;
+    font-size: clamp(30px, 8.6vw, 54px); line-height: 1.02; letter-spacing: 1px; color: var(--accent);
+    transform: rotate(-3deg); text-shadow: 0 0 18px rgba(232, 89, 12, 0.55), 3px 3px 0 #7a2a05;
+    text-wrap: balance;
+  }
+  .end:not([hidden]) .rule { animation: stamp 0.55s cubic-bezier(.2, 1.6, .4, 1) 0.6s both, glow 1.8s ease-in-out 1.2s infinite alternate; }
+  @keyframes stamp { from { opacity: 0; transform: rotate(-3deg) scale(2.4); } to { opacity: 1; transform: rotate(-3deg) scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .end:not([hidden]) .rule { animation: none; } }
+  @keyframes glow { to { text-shadow: 0 0 34px rgba(232, 89, 12, 0.9), 3px 3px 0 #7a2a05; } }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -78,6 +88,7 @@
     <li><b>Rows or columns</b> from spacing alone</li>
     <li><b>A vase or two faces</b> from one outline</li>
   </ul>
+  <p class="rule">One Blueprint to Rule them All!</p>
 </div>
 <div class="bottom">
   <div class="caption" id="caption" style="opacity:0"><p id="capMain"></p><small id="capSub"></small></div>
